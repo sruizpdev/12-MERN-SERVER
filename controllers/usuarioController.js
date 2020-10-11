@@ -1,7 +1,14 @@
 const Usuario = require('../models/Usuario');
 const bcryptjs = require('bcryptjs');
+const { validationResult } = require('express-validator');
+const { restart } = require('nodemon');
 
 exports.crearUsuario = async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
   const { email, password } = req.body;
   try {
     let usuario = await Usuario.findOne({ email });
