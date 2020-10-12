@@ -1,10 +1,9 @@
 const Usuario = require('../models/Usuario');
 const bcryptjs = require('bcryptjs');
 const { validationResult } = require('express-validator');
-const { restart } = require('nodemon');
 const jwt = require('jsonwebtoken');
 
-exports.crearUsuario = async (req, res) => {
+exports.autenticarUsuario = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
@@ -14,16 +13,14 @@ exports.crearUsuario = async (req, res) => {
   try {
     let usuario = await Usuario.findOne({ email });
 
-    if (usuario) {
-      return res.status(400).json({ msg: 'El usuario ya existe' });
+    if (!usuario) {
+      return res.status(400).json({ msg: 'El usuario no existe' });
     }
 
-    usuario = new Usuario(req.body);
-
-    const salt = await bcryptjs.genSalt(10);
-    usuario.password = await bcryptjs.hash(password, salt);
-
-    usuario.save();
+    const passCorrecto = await bcryptjs.compare(password, usuario.password);
+    if (!passCorrecto) {
+      return res.status(400).json({ msg: 'password incorrecto' });
+    }
 
     const payload = {
       usuario: {
